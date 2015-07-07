@@ -1,0 +1,14 @@
+---
+- name: Create temp dir
+  file: path=/rpms state=directory owner=vagrant
+
+- name: Copy RPMS
+  copy: src="{{ rpms_location }}/" dest=/rpms
+
+- name: Create hooks dir
+  file: path=/var/lib/glusterd/hooks/1/delete/post state=directory owner=root
+- name: Install custom RPMs
+  shell: yum install -y /rpms/*
+
+- name: Delete rpms
+  file: path=/rpms state=absent

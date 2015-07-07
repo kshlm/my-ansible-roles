@@ -1,0 +1,32 @@
+---
+# tasks file for kshlm.gluster-ssl
+- name: Create Common CA key
+  local_action: command openssl genrsa -out {{ commonca_key }} 2048 creates={{ commonca_key }}
+  sudo: no
+
+- name: Create Common CA signed cert
+  local_action: command openssl req -new -x509 -key {{ commonca_key }} -subj "/CN=CommonCA" -out {{ commonca_cert }} creates={{ commonca_cert }}
+  sudo: no
+
+- name: Create private key
+  command: openssl genrsa -out {{ pkey }} 2048
+
+- name: Create certificate signing request
+  command: openssl req -new -sha256 -key {{ pkey }} -subj "/CN={{ cname }}" -out {{ csr }}
+
+- name: Fetch certificate signing requests
+  fetch: src={{ csr }} dest=certs/{{ cname }}.csr flat=yes
+
+- name: Create signed certificate
+  local_action: command openssl x509 -req -in certs/{{ cname }}.csr -CA {{ commonca_cert }} -CAkey {{ commonca_key }} -CAcreateserial -out certs/{{ cname }}.pem
+  sudo: no
+
+- name: Copy CA file
+  copy: src={{ commonca_cert }} dest={{ cafile }} owner=root mode=0600
+
+- name: Copy Signed Cert
+  copy: src=certs/{{ cname }}.pem dest={{ cert }} owner=root mode=0600
+
+- name: Enable SSL for GlusterD
+  file: path={{ glusterd_ssl }} state=touch
+  #notify: Restart GlusterD

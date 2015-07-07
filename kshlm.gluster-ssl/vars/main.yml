@@ -1,0 +1,13 @@
+---
+# vars file for kshlm.gluster-ssl
+pkey: /etc/ssl/glusterfs.key
+
+cert: /etc/ssl/glusterfs.pem
+
+csr: /etc/ssl/glusterfs.csr
+
+cname: "{{ ansible_hostname }}"
+
+cafile: /etc/ssl/glusterfs.ca
+
+glusterd_ssl: /var/lib/glusterd/secure-access

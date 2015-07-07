@@ -1,0 +1,4 @@
+---
+# handlers file for kshlm.gluster-ssl
+- name: Restart GlusterD
+  service: name=glusterd state=restarted enabled=yes
