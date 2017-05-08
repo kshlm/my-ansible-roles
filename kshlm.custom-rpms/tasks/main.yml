@@ -24,23 +24,19 @@
   copy: src="{{ host_rpms_dir }}/" dest="{{ rpms_dir }}/"
   when: host_rpms_dir is defined
 
-- name: Register RPM names
+- name: Register RPMs
   command: ls {{ rpms_dir }}
   register: rpms
 
 - name: Install RPMs with dnf
-  dnf: name={{ item }} state=installed
+  dnf: name="{{ rpms_dir }}/{{ item }}" state=installed
   with_items: "{{ rpms.stdout_lines }}"
   when: ansible_distribution == "Fedora" and ansible_distribution_major_version|int >= 22
 
-- name: Install RPMs with dnf
+- name: Install RPMs with yum
   yum: name="{{ rpms_dir }}/{{ item }}" state=installed
   with_items: "{{ rpms.stdout_lines }}"
   when: ansible_os_family == "RedHat" and not (ansible_distribution == "Fedora" and ansible_distribution_major_version|int >= 22)
-
-- name: Install RPMs
-  dnf: name={{ item }} state=installed
-  with_items: "{{ rpms.stdout_lines }}"
 
 - name: Delete rpms
   file: path="{{ rpms_dir }}/" state=absent
