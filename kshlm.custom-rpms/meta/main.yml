@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  author: Kaushal M
+  license: MIT
+  platforms:
+  - name: EL
+    versions:
+    - all
+  - name: Fedora
+    versions:
+    - all
+  categories:
+  - packaging
+  - system

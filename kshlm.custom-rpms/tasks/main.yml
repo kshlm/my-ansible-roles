@@ -1,0 +1,47 @@
+---
+- name: Fail if neither rpms_dir or host_rpms_dir is defined
+  fail: msg="Either one of rpms_dir or host_rpms_dir is required"
+  when:
+    - rpms_dir is undefined
+    - host_rpms_dir is undefined
+
+- name: Fail if both rpms_dir and host_rpms_dir are defined
+  fail: msg="Only one of rpms_dir or host_rpms_dir is required"
+  when:
+    - rpms_dir is defined
+    - host_rpms_dir is defined
+
+- name: Create temp dir
+  command: mktemp -d
+  register: tmpdir
+  when: host_rpms_dir is defined
+
+- name: Set rpms_dir
+  set_fact: rpms_dir="{{ tmpdir.stdout }}"
+  when: host_rpms_dir is defined
+
+- name: Copy RPMS
+  copy: src="{{ host_rpms_dir }}/" dest="{{ rpms_dir }}/"
+  when: host_rpms_dir is defined
+
+- name: Register RPM names
+  command: ls {{ rpms_dir }}
+  register: rpms
+
+- name: Install RPMs with dnf
+  dnf: name={{ item }} state=installed
+  with_items: "{{ rpms.stdout_lines }}"
+  when: ansible_distribution == "Fedora" and ansible_distribution_major_version|int >= 22
+
+- name: Install RPMs with dnf
+  yum: name="{{ rpms_dir }}/{{ item }}" state=installed
+  with_items: "{{ rpms.stdout_lines }}"
+  when: ansible_os_family == "RedHat" and not (ansible_distribution == "Fedora" and ansible_distribution_major_version|int >= 22)
+
+- name: Install RPMs
+  dnf: name={{ item }} state=installed
+  with_items: "{{ rpms.stdout_lines }}"
+
+- name: Delete rpms
+  file: path="{{ rpms_dir }}/" state=absent
+  when: host_rpms_dir is defined
