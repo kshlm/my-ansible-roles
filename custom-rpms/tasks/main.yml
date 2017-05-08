@@ -1,14 +1,28 @@
 ---
-- name: Create temp dir
-  file: path=/rpms state=directory owner=vagrant
+#- name: Create temp dir
+  #command: mktemp -d
+  #register: tmpdir
 
-- name: Copy RPMS
-  copy: src="{{ rpms_location }}/" dest=/rpms
+#- name: Copy RPMS
+  #copy: src="{{ rpms_location }}/" dest="{{ tmpdir.stdout }}/"
 
-- name: Create hooks dir
-  file: path=/var/lib/glusterd/hooks/1/delete/post state=directory owner=root
-- name: Install custom RPMs
-  shell: yum install -y /rpms/*
+- name: Register RPM names
+  command: ls {{ rpms_dir }}
+  register: rpms
 
-- name: Delete rpms
-  file: path=/rpms state=absent
+- name: Install RPMs with dnf
+  dnf: name={{ item }} state=installed
+  with_items: "{{ rpms.stdout_lines }}"
+  when: ansible_distribution == "Fedora" and ansible_distribution_major_version|int >= 22
+
+- name: Install RPMs with dnf
+  yum: name={{ item }} state=installed
+  with_items: "{{ rpms.stdout_lines }}"
+  when: ansible_os_family == "RedHat" and not (ansible_distribution == "Fedora" and ansible_distribution_major_version|int >= 22)
+
+- name: Install RPMs
+  dnf: name={{ item }} state=installed
+  with_items: "{{ rpms.stdout_lines }}"
+
+#- name: Delete rpms
+  #file: path="{{ tmpdir.stdout }}/" state=absent
